@@ -140,6 +140,7 @@ $PidTagExtendedRuleMessageActions = new-object Microsoft.Exchange.WebServices.Da
 $PidTagExtendedRuleMessageCondition = new-object Microsoft.Exchange.WebServices.Data.ExtendedPropertyDefinition(0x0E9A, [Microsoft.Exchange.WebServices.Data.MapiPropertyType]::Binary) # 
 $PidTagRuleMessageState = New-Object Microsoft.Exchange.WebServices.Data.ExtendedPropertyDefinition(0x65E9, [Microsoft.Exchange.WebServices.Data.MapiPropertyType]::Integer) # Defines whether rule is enabled
 $PidTagOfflineAddressBookName = New-Object Microsoft.Exchange.WebServices.Data.ExtendedPropertyDefinition(0x6800, [Microsoft.Exchange.WebServices.Data.MapiPropertyType]::String) # Form name
+$PidTagRuleMsgProvider = New-Object Microsoft.Exchange.WebServices.Data.ExtendedPropertyDefinition(0x65EB, [Microsoft.Exchange.WebServices.Data.MapiPropertyType]::String)
 $dateTimeCreatedProperty = [Microsoft.Exchange.WebServices.Data.ItemSchema]::DateTimeCreated
 
 $PropertySet = new-object Microsoft.Exchange.WebServices.Data.PropertySet
@@ -150,6 +151,7 @@ $PropertySet.Add($PidTagExtendedRuleMessageCondition)
 $PropertySet.Add($PidTagRuleMessageState)
 $PropertySet.Add($PidTagOfflineAddressBookName)
 $propertySet.Add($dateTimeCreatedProperty)
+$propertySet.Add($PidTagRuleMsgProvider)
 
 #Connect to Remote Powershell
 #This gets us connected to an Exchange remote powershell service
@@ -196,12 +198,15 @@ foreach ($box in $mailBoxes)
         $actionCommand = ""
         Check-Action ($ruleactionsbytearray) ([REF] $isPotentiallyMalicious) ([REF] $actionType) ([REF] $actionCommand)
 
+        $RuleMsgProviderValue = $null
+        [Void]$Item.TryGetProperty($PidTagRuleMsgProvider,[ref]$RuleMsgProviderValue)
 
         if ($Item.ItemClass -eq "IPM.Rule.Version2.Message") 
         {
         $Rules += New-Object PSObject -Property @{
             User        = $box.UserPrincipalName
             RuleName    = Get-ExtendedProperty -Item $Item -Property $PidTagRuleMessageName
+            RuleMsgProvider = $RuleMsgProviderValue
             IsPotentiallyMalicious = $isPotentiallyMalicious
             ActionType  = $actionType
             ActionCommand = $actionCommand
